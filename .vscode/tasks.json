@@ -1,0 +1,36 @@
+{
+  // Build tasks referenced by launch.json's `preLaunchTask`.
+  "version": "2.0.0",
+  "tasks": [
+    {
+      // The API imports @calc/contracts and @calc/calc-engine from their `dist`
+      // output, so those must be built first or the compile resolves stale types.
+      "label": "build: packages",
+      "type": "shell",
+      "command": "npm run build:packages",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$tsc"],
+      "group": "build",
+      "presentation": { "reveal": "silent", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "build: api",
+      "type": "shell",
+      "command": "npm run build --workspace @calc/api",
+      "options": { "cwd": "${workspaceFolder}" },
+      "dependsOn": ["build: packages"],
+      "dependsOrder": "sequence",
+      "problemMatcher": ["$tsc"],
+      "group": "build",
+      "presentation": { "reveal": "silent", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "test: all",
+      "type": "shell",
+      "command": "npm test",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "group": { "kind": "test", "isDefault": true }
+    }
+  ]
+}

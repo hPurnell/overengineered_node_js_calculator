@@ -1,0 +1,118 @@
+/* ---------------------------------------------------------------------------
+ * Design tokens
+ *
+ * Values are taken from Apple's dark-appearance Calculator so the palette lives
+ * in one place rather than being scattered through component styles.
+ * ------------------------------------------------------------------------ */
+:root {
+  /* Window ---------------------------------------------------------------- */
+  --window-radius: 12px;
+  --window-background: rgba(40, 40, 42, 0.72);
+  --window-border: rgba(255, 255, 255, 0.12);
+  --window-shadow: 0 24px 68px rgba(0, 0, 0, 0.58), 0 2px 8px rgba(0, 0, 0, 0.4);
+  --titlebar-height: 32px;
+
+  /* Keys ------------------------------------------------------------------ */
+  --key-digit: #3a3a3c;
+  --key-digit-hover: #48484a;
+  --key-digit-active: #5a5a5c;
+
+  --key-function: #a5a5a5;
+  --key-function-hover: #b5b5b5;
+  --key-function-active: #d4d4d2;
+
+  --key-operator: #ff9f0a;
+  --key-operator-hover: #ffb03a;
+  --key-operator-active: #ffc46b;
+
+  --key-radius: 13px;
+  --key-gap: 6px;
+  --key-height: 46px;
+  --keypad-rows: 5;
+  --keypad-padding: 8px;
+
+  /*
+   * The window is a fixed size, as on macOS. Deriving the height from the key
+   * tokens rather than hard-coding it means resizing a key cannot silently
+   * desynchronise the history panel from the keypad.
+   */
+  --display-height: 100px;
+  --body-height: calc(
+    var(--display-height) + (var(--keypad-rows) * var(--key-height)) +
+      ((var(--keypad-rows) - 1) * var(--key-gap)) + var(--keypad-padding)
+  );
+
+  /* Text ------------------------------------------------------------------ */
+  --text-primary: #ffffff;
+  --text-on-function: #000000;
+  --text-muted: rgba(255, 255, 255, 0.5);
+  --text-faint: rgba(255, 255, 255, 0.32);
+
+  /* Panels ---------------------------------------------------------------- */
+  --panel-divider: rgba(255, 255, 255, 0.1);
+  --panel-hover: rgba(255, 255, 255, 0.06);
+
+  /* Motion ---------------------------------------------------------------- */
+  --ease-out: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --font-system: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
+    'Helvetica Neue', 'Segoe UI', system-ui, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-system);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* A desktop-like backdrop, so the window reads as a floating macOS window
+     rather than a page element. */
+  background-color: #1b2733;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 20% 0%, #2d5a7b 0%, transparent 60%),
+    radial-gradient(ellipse 70% 70% at 85% 25%, #6b3f6e 0%, transparent 55%),
+    radial-gradient(ellipse 90% 70% at 50% 110%, #12303f 0%, transparent 60%),
+    linear-gradient(165deg, #24405a 0%, #16232f 55%, #0d151d 100%);
+  background-attachment: fixed;
+
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 24px;
+}
+
+/* Visible only to assistive technology. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

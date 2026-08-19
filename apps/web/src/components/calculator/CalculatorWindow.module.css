@@ -1,0 +1,130 @@
+.window {
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  border-radius: var(--window-radius);
+  background: var(--window-background);
+  box-shadow: var(--window-shadow);
+  overflow: hidden;
+
+  /* macOS vibrancy: the window tints and blurs whatever sits behind it. */
+  backdrop-filter: blur(42px) saturate(180%);
+  -webkit-backdrop-filter: blur(42px) saturate(180%);
+
+  /* A hairline that reads as 1px at any scale factor. */
+  outline: 0.5px solid var(--window-border);
+  outline-offset: -0.5px;
+}
+
+.titlebar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: var(--titlebar-height);
+  padding: 0 12px;
+  flex: 0 0 auto;
+}
+
+.trafficLights {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/*
+ * Traffic lights are decorative here: there is no window server to talk to, so
+ * they are rendered as spans rather than buttons and hidden from the
+ * accessibility tree.
+ */
+.light {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.2);
+}
+
+.close {
+  background: #ff5f57;
+}
+
+.minimise {
+  background: #febc2e;
+}
+
+.zoom {
+  background: #28c840;
+}
+
+.title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  pointer-events: none;
+  letter-spacing: 0.01em;
+}
+
+.actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  z-index: 1;
+}
+
+.historyToggle {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.62);
+  cursor: pointer;
+  transition: background-color 120ms var(--ease-out), color 120ms var(--ease-out);
+}
+
+.historyToggle:hover {
+  background: var(--panel-hover);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.historyToggle[aria-pressed='true'] {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.historyToggle:focus-visible {
+  outline: 2px solid var(--key-operator);
+  outline-offset: 1px;
+}
+
+.body {
+  display: flex;
+  align-items: stretch;
+
+  /*
+   * Definite, so a long history scrolls within the window instead of stretching
+   * it. Without this the panel's list would drive the row height and the window
+   * would grow with every calculation.
+   */
+  height: var(--body-height);
+}
+
+.calculator {
+  display: flex;
+  flex-direction: column;
+  width: 268px;
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+/* Spans the full window width, below the fixed-height body. */
+.footer {
+  flex: 0 0 auto;
+}

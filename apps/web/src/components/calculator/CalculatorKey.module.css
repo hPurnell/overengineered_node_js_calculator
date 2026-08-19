@@ -1,0 +1,101 @@
+.key {
+  display: grid;
+  place-items: center;
+  height: var(--key-height);
+  padding: 0;
+  border: none;
+  border-radius: var(--key-radius);
+  font-family: inherit;
+  font-size: 21px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition:
+    background-color 90ms var(--ease-out),
+    transform 90ms var(--ease-out),
+    color 90ms var(--ease-out);
+}
+
+.key:active {
+  /* The subtle press-in Apple uses instead of a colour-only change. */
+  transform: scale(0.96);
+}
+
+.key:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: -3px;
+}
+
+.key:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.key:disabled:active {
+  transform: none;
+}
+
+/* Digits and the decimal point ------------------------------------------- */
+.digit {
+  background: var(--key-digit);
+  color: var(--text-primary);
+}
+
+.digit:hover:not(:disabled) {
+  background: var(--key-digit-hover);
+}
+
+.digit:active:not(:disabled) {
+  background: var(--key-digit-active);
+}
+
+/* AC / C, sign toggle, percent -------------------------------------------- */
+.function {
+  background: var(--key-function);
+  color: var(--text-on-function);
+  font-size: 19px;
+}
+
+.function:hover:not(:disabled) {
+  background: var(--key-function-hover);
+}
+
+.function:active:not(:disabled) {
+  background: var(--key-function-active);
+}
+
+/* Operators and equals ---------------------------------------------------- */
+.operator {
+  background: var(--key-operator);
+  color: var(--text-primary);
+  font-size: 25px;
+  font-weight: 400;
+}
+
+.operator:hover:not(:disabled) {
+  background: var(--key-operator-hover);
+}
+
+.operator:active:not(:disabled) {
+  background: var(--key-operator-active);
+}
+
+/*
+ * The lit state for an operator awaiting its right operand: Apple inverts the
+ * key so the pending operation stays visible while the next number is typed.
+ */
+.pending {
+  background: #ffffff;
+  color: var(--key-operator);
+}
+
+.pending:hover:not(:disabled) {
+  background: #ffffff;
+}
+
+/* The zero key spans the width of two columns. */
+.wide {
+  grid-column: span 2;
+}

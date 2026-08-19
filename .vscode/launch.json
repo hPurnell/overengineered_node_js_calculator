@@ -1,0 +1,160 @@
+{
+  // Debug profiles for the calculator monorepo.
+  //
+  // The API loads `.env` itself (anchored to the repo root, not the cwd), so no
+  // profile needs `envFile`. Values set under `env` below are real environment
+  // variables and therefore take precedence over `.env`, which is what makes
+  // the debug overrides here stick.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // Runs the TypeScript sources directly through tsx. Breakpoints work in
+      // .ts files with no build step, so this is the one to use day to day.
+      "name": "API",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/apps/api/src/main.ts",
+      "runtimeArgs": ["--import", "tsx"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": {
+        "NODE_ENV": "development",
+        "LOG_LEVEL": "debug"
+      },
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "presentation": { "group": "1-services", "order": 1 }
+    },
+    {
+      // Debugs the shipped artifact via source maps. Use this to reproduce
+      // something that only misbehaves after compilation.
+      "name": "API (compiled)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/apps/api/dist/main.js",
+      "preLaunchTask": "build: api",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "sourceMaps": true,
+      "outFiles": [
+        "${workspaceFolder}/apps/api/dist/**/*.js",
+        "${workspaceFolder}/packages/*/dist/**/*.js"
+      ],
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "presentation": { "group": "1-services", "order": 2 }
+    },
+    {
+      // Server-side Next.js: route handlers, server components, SSR.
+      // `autoAttachChildProcesses` is what lets breakpoints bind inside the
+      // dev server that npm spawns, rather than only in the npm wrapper.
+      // Once it reports "- Local: …", a Chrome window attaches automatically
+      // so client and server can be stepped through in one session.
+      "name": "Web",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--workspace", "@calc/web"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "autoAttachChildProcesses": true,
+      "serverReadyAction": {
+        "pattern": "-\\s+Local:\\s+(https?://\\S+)",
+        "uriFormat": "%s",
+        "action": "debugWithChrome"
+      },
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "presentation": { "group": "1-services", "order": 3 }
+    },
+    {
+      // Browser-only, for a dev server that is already running.
+      "name": "Web (browser only)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}/apps/web",
+      "sourceMapPathOverrides": {
+        "webpack://_N_E/./*": "${workspaceFolder}/apps/web/*",
+        "webpack:///./*": "${workspaceFolder}/apps/web/*"
+      },
+      "presentation": { "group": "1-services", "order": 4 }
+    },
+    {
+      // Runs whichever test file is focused, in any of the three workspaces.
+      //
+      // Launched via npx rather than vitest.mjs directly, and the difference
+      // matters: npx resolves Vitest's `root` to the enclosing package (so the
+      // config's `include` globs line up), whereas invoking vitest.mjs sets
+      // `root` to the cwd, which here is the file's own directory — and then
+      // `src/**/*.test.ts` matches nothing.
+      //
+      // Parallelism is disabled so breakpoints hit predictably.
+      "name": "Test: current file",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vitest", "run", "--no-file-parallelism", "${fileBasename}"],
+      "cwd": "${fileDirname}",
+      "console": "integratedTerminal",
+      "autoAttachChildProcesses": true,
+      "smartStep": true,
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "presentation": { "group": "2-tests", "order": 1 }
+    },
+    {
+      "name": "Test: API",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
+      "args": ["run", "--no-file-parallelism"],
+      "cwd": "${workspaceFolder}/apps/api",
+      "console": "integratedTerminal",
+      "autoAttachChildProcesses": true,
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "presentation": { "group": "2-tests", "order": 2 }
+    },
+    {
+      "name": "Test: calc-engine",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
+      "args": ["run", "--no-file-parallelism"],
+      "cwd": "${workspaceFolder}/packages/calc-engine",
+      "console": "integratedTerminal",
+      "autoAttachChildProcesses": true,
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "presentation": { "group": "2-tests", "order": 3 }
+    },
+    {
+      "name": "Test: web",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
+      "args": ["run", "--no-file-parallelism"],
+      "cwd": "${workspaceFolder}/apps/web",
+      "console": "integratedTerminal",
+      "autoAttachChildProcesses": true,
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "presentation": { "group": "2-tests", "order": 4 }
+    },
+    {
+      // Applies pending migrations against the same database the server uses.
+      "name": "Migrations: apply",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/apps/api/src/cli/migrate.ts",
+      "runtimeArgs": ["--import", "tsx"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "presentation": { "group": "3-tools", "order": 1 }
+    }
+  ],
+  "compounds": [
+    {
+      // Both services with one keypress; stopping either stops both.
+      "name": "Full stack (API + Web)",
+      "configurations": ["API", "Web"],
+      "stopAll": true,
+      "presentation": { "group": "0-compound", "order": 1 }
+    }
+  ]
+}

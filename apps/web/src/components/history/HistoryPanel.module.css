@@ -1,0 +1,203 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  width: 236px;
+  flex: 0 0 auto;
+  /* Required for `.list` to become the scroll container rather than overflowing. */
+  min-height: 0;
+  border-left: 0.5px solid var(--panel-divider);
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px 8px 14px;
+  flex: 0 0 auto;
+}
+
+.heading {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.clearButton {
+  padding: 3px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--key-operator);
+  cursor: pointer;
+  transition: background-color 120ms var(--ease-out);
+}
+
+.clearButton:hover:not(:disabled) {
+  background: rgba(255, 159, 10, 0.16);
+}
+
+.clearButton:disabled {
+  color: var(--text-faint);
+  cursor: default;
+}
+
+.clearButton:focus-visible {
+  outline: 2px solid var(--key-operator);
+  outline-offset: 1px;
+}
+
+.list {
+  flex: 1 1 auto;
+  margin: 0;
+  padding: 0 6px 8px;
+  list-style: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  /* Thin overlay scrollbar, as on macOS. */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+}
+
+.list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.list::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.22);
+  border: 2px solid transparent;
+  background-clip: content-box;
+  border-radius: 4px;
+}
+
+.item {
+  position: relative;
+}
+
+/*
+ * The whole row is a button so a history entry can be recalled with one click
+ * or with the keyboard.
+ */
+.entry {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  width: 100%;
+  padding: 7px 30px 7px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  font-family: inherit;
+  text-align: right;
+  cursor: pointer;
+  transition: background-color 110ms var(--ease-out);
+}
+
+.entry:hover {
+  background: var(--panel-hover);
+}
+
+.entry:focus-visible {
+  outline: 2px solid var(--key-operator);
+  outline-offset: -2px;
+}
+
+.entryExpression {
+  max-width: 100%;
+  font-size: 11.5px;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  direction: rtl;
+  unicode-bidi: plaintext;
+}
+
+.entryResult {
+  max-width: 100%;
+  font-size: 17px;
+  font-weight: 300;
+  color: var(--text-primary);
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  direction: rtl;
+  unicode-bidi: plaintext;
+}
+
+.deleteButton {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 110ms var(--ease-out), color 110ms var(--ease-out),
+    background-color 110ms var(--ease-out);
+}
+
+.item:hover .deleteButton,
+.deleteButton:focus-visible {
+  opacity: 1;
+}
+
+.deleteButton:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.deleteButton:focus-visible {
+  outline: 2px solid var(--key-operator);
+  outline-offset: 1px;
+}
+
+.message {
+  padding: 18px 14px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.loadMore {
+  display: block;
+  width: calc(100% - 12px);
+  margin: 4px 6px 0;
+  padding: 6px;
+  border: none;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.06);
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 120ms var(--ease-out);
+}
+
+.loadMore:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+}
+
+.loadMore:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
