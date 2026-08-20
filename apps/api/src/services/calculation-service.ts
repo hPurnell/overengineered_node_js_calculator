@@ -1,4 +1,4 @@
-import { compute, isCalculationError } from '@calc/calc-engine';
+import { compute, isCalculationError } from '../engine';
 import type {
   Calculation,
   EvaluateCalculationRequest,

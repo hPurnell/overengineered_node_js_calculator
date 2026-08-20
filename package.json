@@ -11,8 +11,8 @@
     "apps/*"
   ],
   "scripts": {
-    "build": "npm run build --workspace @calc/contracts && npm run build --workspace @calc/calc-engine && npm run build --workspace @calc/api && npm run build --workspace @calc/web",
-    "build:packages": "npm run build --workspace @calc/contracts && npm run build --workspace @calc/calc-engine",
+    "build": "npm run build --workspace @calc/contracts && npm run build --workspace @calc/api && npm run build --workspace @calc/web",
+    "build:packages": "npm run build --workspace @calc/contracts",
     "dev": "npm run build:packages && concurrently -n api,web -c magenta,cyan \"npm:dev:api\" \"npm:dev:web\"",
     "dev:api": "npm run dev --workspace @calc/api",
     "dev:web": "npm run dev --workspace @calc/web",

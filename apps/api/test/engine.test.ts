@@ -5,7 +5,7 @@ import {
   ExpressionTooComplexError,
   InvalidExpressionError,
   compute,
-} from './index';
+} from '../src/engine';
 
 /** Convenience: assert on the canonical (lossless) result. */
 const result = (expression: string): string => compute(expression).result;
@@ -157,5 +157,61 @@ describe('display formatting', () => {
     expect(display('0-1e20')).toBe('\u22121e+20');
     // The exponent keeps the conventional ASCII hyphen.
     expect(display('0-1e-9')).toBe('\u22121e-9');
+  });
+});
+
+describe('hardening: the engine is restricted to arithmetic', () => {
+  /**
+   * These cases all evaluate happily under an unrestricted mathjs instance.
+   * The grammar allowlist is the only thing standing between a request body
+   * and a computer-algebra system, so each rejection is pinned here.
+   */
+  it('rejects function calls', () => {
+    expect(() => compute('factorial(20)')).toThrow(InvalidExpressionError);
+    expect(() => compute('sqrt(4)')).toThrow(InvalidExpressionError);
+    expect(() => compute('max(1,2)')).toThrow(InvalidExpressionError);
+  });
+
+  it('rejects resource-exhaustion payloads before evaluating them', () => {
+    // Unrestricted, this allocates a 400-million-cell matrix and takes the
+    // process down with an out-of-memory crash. It must be refused at parse
+    // time, which is also why this test returns promptly.
+    expect(() => compute('zeros(20000,20000)')).toThrow(InvalidExpressionError);
+    expect(() => compute('ones(50000,50000)')).toThrow(InvalidExpressionError);
+  });
+
+  it('rejects assignment and function definition', () => {
+    expect(() => compute('a=5')).toThrow(InvalidExpressionError);
+    expect(() => compute('a=5; a*3')).toThrow(InvalidExpressionError);
+    expect(() => compute('f(x)=x*2; f(21)')).toThrow(InvalidExpressionError);
+  });
+
+  it('rejects symbols and constants', () => {
+    expect(() => compute('pi')).toThrow(InvalidExpressionError);
+    expect(() => compute('e*2')).toThrow(InvalidExpressionError);
+    expect(() => compute('x+1')).toThrow(InvalidExpressionError);
+  });
+
+  it('rejects operators outside the four functions', () => {
+    expect(() => compute('2^8')).toThrow(InvalidExpressionError);
+    expect(() => compute('5 mod 2')).toThrow(InvalidExpressionError);
+    expect(() => compute('1 == 1')).toThrow(InvalidExpressionError);
+    expect(() => compute('true and false')).toThrow(InvalidExpressionError);
+    expect(() => compute('5!')).toThrow(InvalidExpressionError);
+  });
+
+  it('rejects non-scalar types', () => {
+    expect(() => compute('[1,2,3]')).toThrow(InvalidExpressionError);
+    expect(() => compute('[1,2,3]*2')).toThrow(InvalidExpressionError);
+    expect(() => compute('"ab"')).toThrow(InvalidExpressionError);
+    // mathjs parses these into a ConstantNode too, so the allowlist has to
+    // check the literal's type, not just the node's.
+    expect(() => compute('true')).toThrow(InvalidExpressionError);
+    expect(() => compute('null')).toThrow(InvalidExpressionError);
+  });
+
+  it('rejects unit and index syntax', () => {
+    expect(() => compute('2 inch')).toThrow(InvalidExpressionError);
+    expect(() => compute('[1,2][1]')).toThrow(InvalidExpressionError);
   });
 });

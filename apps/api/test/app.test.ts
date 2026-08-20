@@ -1,10 +1,10 @@
 import { ApiErrorCode, ApiRoutes } from '@calc/contracts';
-import { createHistoryStore, type HistoryStore } from './persistence';
-import type { FastifyInstance } from 'fastify';
+import { createHistoryStore, type HistoryStore } from '../src/persistence';
+import type { FastifyInstance, InjectOptions, LightMyRequestResponse } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { buildApp } from './app';
-import { loadConfig, type AppConfig } from './config/environment';
+import { buildApp } from '../src/app';
+import { loadConfig, type AppConfig } from '../src/config/environment';
 
 /**
  * Integration tests exercise the fully wired app through `inject()`: real
@@ -20,8 +20,16 @@ const config: AppConfig = loadConfig({
   CORS_ORIGINS: 'http://localhost:3000',
 });
 
-const evaluate = (body: unknown) =>
-  app.inject({ method: 'POST', url: ApiRoutes.calculations, payload: body });
+// The return type is annotated deliberately. `inject` is overloaded, and an
+// argument TypeScript cannot match — an `unknown` payload, here — makes it fall
+// back to an intersection that includes `void`, so `await` stops unwrapping and
+// every `response.statusCode` downstream fails to resolve.
+const evaluate = (body: unknown): Promise<LightMyRequestResponse> =>
+  app.inject({
+    method: 'POST',
+    url: ApiRoutes.calculations,
+    payload: body as InjectOptions['payload'],
+  });
 
 beforeEach(async () => {
   historyStore = createHistoryStore({ url: ':memory:' });

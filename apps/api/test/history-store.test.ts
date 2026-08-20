@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { InvalidCursorError, createHistoryStore } from './index';
-import type { HistoryStore, NewCalculationRecord } from './index';
+import { InvalidCursorError, createHistoryStore } from '../src/persistence';
+import type { HistoryStore, NewCalculationRecord } from '../src/persistence';
 
 /**
  * Every test runs against a fresh in-memory database that has been migrated

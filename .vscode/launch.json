@@ -84,7 +84,7 @@
       // matters: npx resolves Vitest's `root` to the enclosing package (so the
       // config's `include` globs line up), whereas invoking vitest.mjs sets
       // `root` to the cwd, which here is the file's own directory — and then
-      // `src/**/*.test.ts` matches nothing.
+      // the config's include glob matches nothing.
       //
       // Parallelism is disabled so breakpoints hit predictably.
       "name": "Test: current file",
@@ -110,18 +110,6 @@
       "autoAttachChildProcesses": true,
       "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
       "presentation": { "group": "2-tests", "order": 2 }
-    },
-    {
-      "name": "Test: calc-engine",
-      "type": "node",
-      "request": "launch",
-      "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
-      "args": ["run", "--no-file-parallelism"],
-      "cwd": "${workspaceFolder}/packages/calc-engine",
-      "console": "integratedTerminal",
-      "autoAttachChildProcesses": true,
-      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
-      "presentation": { "group": "2-tests", "order": 3 }
     },
     {
       "name": "Test: web",

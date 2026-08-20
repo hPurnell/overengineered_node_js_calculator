@@ -17,10 +17,11 @@ apps/web            Next.js UI. Owns keypad state; no arithmetic.
   │  POST /api/v1/calculations   ← only on "="
   ▼
 apps/api            Fastify computation API. Validation, HTTP, error mapping.
-  ├── src/persistence       HistoryStore port. SQLite/Drizzle adapter behind it.
-  └── @calc/calc-engine     Tokenizer → parser → evaluator → display formatter.
+  ├── src/engine            Hardened mathjs evaluator + display formatter.
+  └── src/persistence       HistoryStore port. SQLite/Drizzle adapter behind it.
 
 packages/contracts  Zod schemas + types shared by client and server.
+                    The only shared package: everything else is app-local.
 ```
 
 Four boundaries do the load-bearing work:
@@ -28,7 +29,7 @@ Four boundaries do the load-bearing work:
 | Boundary | What it hides |
 | --- | --- |
 | `@calc/contracts` | The wire format. One schema set, validated on both ends. |
-| `@calc/calc-engine` | Arithmetic. Pure, synchronous, no I/O, no HTTP awareness. |
+| `apps/api/src/engine` | Arithmetic, **and that it is mathjs**. A CAS restricted to four-function maths. |
 | `apps/api/src/persistence` | **That history is SQLite.** Callers see only the `HistoryStore` interface. |
 | `apps/api` | HTTP. The engine and the store know nothing about status codes. |
 
@@ -52,9 +53,15 @@ Replacing SQLite with a networked database is a change confined to
 
 Because the layer is a directory rather than a package, nothing at the module
 system level stops a relative import into `internal/`. That guarantee is
-restored by [`boundary.test.ts`](apps/api/src/persistence/boundary.test.ts),
-which fails the build if any file outside the layer imports `better-sqlite3` or
-`drizzle-orm`, reaches into `internal/`, or bypasses the layer's index.
+restored by [`architecture.test.ts`](apps/api/test/architecture.test.ts), which
+covers `engine` and `persistence` alike: it fails the build if any file outside
+a layer imports its implementation package (`mathjs`, `better-sqlite3`,
+`drizzle-orm`), reaches into its `internal/`, re-exports an internal through the
+public surface, or bypasses the layer's index.
+
+That rule matters most for the engine: an unguarded `import { evaluate } from
+'mathjs'` anywhere in the API would sidestep the allowlist and restore the
+out-of-memory hole described below.
 
 Every port method is `async` even though better-sqlite3 is synchronous. That is
 the seam that makes such a swap a drop-in.
@@ -119,28 +126,47 @@ run `npm rebuild better-sqlite3` (or `npm approve-scripts`).
 ## Verifying
 
 ```bash
-npm test         # 90 tests across all three workspaces
+npm test         # 105 tests
 npm run typecheck
 npm run build
 ```
 
+Test layout follows each stack's convention: `apps/api` keeps its suites in a
+sibling [`test/`](apps/api/test) tree, as Node services and the Fastify
+ecosystem do, while `apps/web` colocates `*.test.ts` beside the source, as the
+Next.js and React ecosystem does. The API's tests sit outside the build
+`tsconfig`, so they have their own
+[`tsconfig.test.json`](apps/api/tsconfig.test.json) — without it they would go
+entirely untypechecked.
+
 | Workspace | Covers |
 | --- | --- |
-| `@calc/calc-engine` | Precedence, associativity, decimal exactness, percent semantics, safety limits, display formatting |
-| `@calc/api` | Routing, validation, status codes, CORS, health, error envelope; plus migrations, keyset pagination, precision round-trip, and the persistence-boundary rules |
+| `@calc/api` | Precedence, decimal exactness, percent semantics, display formatting and the grammar allowlist; routing, validation, status codes, CORS, health, error envelope; migrations, keyset pagination, precision round-trip; and the layer-boundary rules |
 | `@calc/web` | The full keypad state machine and expression building |
 
 ## Notable decisions
 
-**Results are decimals, not floats.** The engine uses `decimal.js`, so
-`0.1 + 0.2` is exactly `0.3`. Results are stored and transmitted as **strings**
+**Results are decimals, not floats.** The engine runs mathjs in `BigNumber`
+mode, so `0.1 + 0.2` is exactly `0.3`. Results are stored and transmitted as **strings**
 in a `TEXT` column — SQLite's `REAL` is an IEEE-754 double and would silently
 destroy the precision the engine works to preserve.
 
 **Percent is context-sensitive, as on Apple's calculators.** `200 + 10%` is
-`220`, not `200.1`; but `200 × 10%` is `20`. Only the evaluator can see the
-parent operator, so `%` is its own AST node resolved at evaluation time rather
-than folded into a division during parsing.
+`220`, not `200.1`; but `200 × 10%` is `20`. mathjs resolves this during
+parsing — but only from **v15**: v14 parses `200/10%` as `200/10/100` and gets
+`0.2` instead of `2000`. The floor in `package.json` is a correctness
+requirement, and the percent tests are what pin it.
+
+**The grammar allowlist is a security control, not tidiness.** mathjs is a full
+computer-algebra system; unrestricted, `evaluate` accepts function definitions,
+variable assignment and builtin calls, and the one-line body
+`zeros(20000,20000)` exhausts the heap and takes the API process down. The
+engine walks the parsed tree and rejects every node type outside
+`OperatorNode`/`ConstantNode`/`ParenthesisNode` — and every operator outside the
+four functions — *before* anything is evaluated. Constants are checked for
+being numeric too, since mathjs parses `"ab"` and `true` into a `ConstantNode`
+as well. See [`guard.ts`](apps/api/src/engine/internal/guard.ts); the `hardening`
+suite pins each rejection.
 
 **Two representations of every expression.** The UI shows Apple's glyphs
 (`×`, `÷`, `−`) but always transmits canonical ASCII, so the grammar the server
