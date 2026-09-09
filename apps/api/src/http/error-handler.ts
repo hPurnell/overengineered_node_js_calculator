@@ -5,7 +5,7 @@ import {
   type ApiError,
 } from '@calc/contracts';
 import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { isHttpError } from '../domain/errors';
+import { isCodedError, statusForCode } from './errors';
 
 /**
  * Registers the single error hook every failed request funnels through.
@@ -30,12 +30,17 @@ export function registerErrorHandler(app: FastifyInstance): void {
       );
     }
 
-    if (isHttpError(error)) {
+    if (isCodedError(error)) {
+      const status = statusForCode(error.code);
+
       // Client errors are expected traffic; log them at debug to keep the
-      // signal-to-noise ratio of the error log usable.
-      request.log.debug({ err: error, code: error.code }, 'Request rejected');
+      // signal-to-noise ratio of the error log usable. Anything mapping to 5xx
+      // is a genuine fault and is logged as one.
+      const log = status >= 500 ? request.log.error : request.log.debug;
+      log.call(request.log, { err: error, code: error.code }, 'Request rejected');
+
       return reply
-        .status(error.statusCode)
+        .status(status)
         .send(envelope(error.code, error.message, requestId, error.details));
     }
 

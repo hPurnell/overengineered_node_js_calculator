@@ -1,4 +1,6 @@
-import { API_ERROR_DISPLAY_TEXT, ApiErrorCode } from '@calc/contracts';
+import { ApiErrorCode } from '@calc/contracts';
+
+import { displayTextForCode } from './display-text';
 
 /**
  * A failed API call, normalised so the UI has one error type to handle whether
@@ -24,7 +26,7 @@ export class ApiClientError extends Error {
     this.code = options.code;
     this.status = options.status;
     this.requestId = options.requestId;
-    this.displayText = API_ERROR_DISPLAY_TEXT[options.code];
+    this.displayText = displayTextForCode(options.code);
   }
 
   /** True when the request never completed, as opposed to being rejected. */

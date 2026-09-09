@@ -8,7 +8,7 @@ import type {
 import { InvalidCursorError, type HistoryStore } from '../persistence';
 import { ApiErrorCode } from '@calc/contracts';
 
-import { HttpError } from '../domain/errors';
+import { ServiceError } from './errors';
 
 export interface CalculationServiceDependencies {
   readonly historyStore: HistoryStore;
@@ -21,9 +21,9 @@ export interface CalculationServiceDependencies {
  * and read back or prune the history. It depends on the {@link HistoryStore}
  * port, so it has no idea where history is kept.
  *
- * Engine failures are translated into {@link HttpError} here rather than in the
- * route handlers, keeping HTTP concerns in one layer and leaving handlers as
- * thin adapters.
+ * Engine and store failures are translated into {@link ServiceError} here, so
+ * every caller sees one error vocabulary. The errors say what went wrong; the
+ * HTTP layer alone decides what status reports them.
  */
 export class CalculationService {
   private readonly historyStore: HistoryStore;
@@ -46,7 +46,7 @@ export class CalculationService {
     try {
       computation = compute(expression);
     } catch (error) {
-      throw this.toHttpError(error, expression);
+      throw this.toServiceError(error, expression);
     }
 
     const record = await this.historyStore.append({
@@ -70,7 +70,7 @@ export class CalculationService {
       };
     } catch (error) {
       if (error instanceof InvalidCursorError) {
-        throw HttpError.badRequest(ApiErrorCode.VALIDATION_FAILED, error.message);
+        throw ServiceError.invalidRequest(error.message);
       }
       throw error;
     }
@@ -85,7 +85,7 @@ export class CalculationService {
   async deleteHistoryEntry(id: string): Promise<void> {
     const deleted = await this.historyStore.deleteById(id);
     if (!deleted) {
-      throw HttpError.notFound(`No calculation with id ${id}`);
+      throw ServiceError.notFound(`No calculation with id ${id}`);
     }
   }
 
@@ -95,29 +95,26 @@ export class CalculationService {
   }
 
   /**
-   * Maps an engine failure onto the right HTTP status.
+   * Restates an engine failure in the service's own error vocabulary.
    *
-   * A malformed expression is a 400 (the client sent something it should have
-   * caught); a valid expression that cannot be evaluated is a 422.
+   * The engine's error already carries the right {@link ApiErrorCode}; this
+   * adds the offending expression as context and drops the engine type, so
+   * callers depend on one error shape rather than on the engine's.
    */
-  private toHttpError(error: unknown, expression: string): HttpError {
+  private toServiceError(error: unknown, expression: string): ServiceError {
     if (!isCalculationError(error)) {
-      return new HttpError(500, ApiErrorCode.INTERNAL_ERROR, 'Failed to evaluate expression', {
-        cause: error,
-      });
+      return new ServiceError(
+        ApiErrorCode.INTERNAL_ERROR,
+        'Failed to evaluate expression',
+        { cause: error },
+      );
     }
 
-    const details = {
-      expression,
-      ...(error.position === undefined ? {} : { position: error.position }),
-    };
-
-    switch (error.code) {
-      case ApiErrorCode.DIVISION_BY_ZERO:
-      case ApiErrorCode.UNDEFINED_RESULT:
-        return HttpError.unprocessable(error.code, error.message, details);
-      default:
-        return HttpError.badRequest(error.code, error.message, details);
-    }
+    return new ServiceError(error.code, error.message, {
+      details: {
+        expression,
+        ...(error.position === undefined ? {} : { position: error.position }),
+      },
+    });
   }
 }

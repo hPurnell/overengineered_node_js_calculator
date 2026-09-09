@@ -1,6 +1,6 @@
 import { all, create, type FactoryFunctionMap } from 'mathjs';
 
-import { COMPUTATION_PRECISION } from '@calc/contracts';
+import { COMPUTATION_PRECISION } from '../limits';
 
 /**
  * A private mathjs instance configured for exact decimal arithmetic.

@@ -24,21 +24,3 @@ export const ApiErrorCode = {
 } as const;
 
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];
-
-/**
- * Human-facing fallback copy for each error code.
- *
- * The web client prefers these over the server-supplied `message` so the UI
- * stays in the calculator's voice ("Not a number") rather than the engine's
- * voice ("division by zero at offset 4").
- */
-export const API_ERROR_DISPLAY_TEXT: Record<ApiErrorCode, string> = {
-  [ApiErrorCode.VALIDATION_FAILED]: 'Error',
-  [ApiErrorCode.INVALID_EXPRESSION]: 'Error',
-  [ApiErrorCode.DIVISION_BY_ZERO]: 'Not a number',
-  [ApiErrorCode.UNDEFINED_RESULT]: 'Not a number',
-  [ApiErrorCode.EXPRESSION_TOO_COMPLEX]: 'Error',
-  [ApiErrorCode.NOT_FOUND]: 'Error',
-  [ApiErrorCode.RATE_LIMITED]: 'Error',
-  [ApiErrorCode.INTERNAL_ERROR]: 'Error',
-};

@@ -1,6 +1,6 @@
 import DecimalJs from 'decimal.js';
 
-import { COMPUTATION_PRECISION } from '@calc/contracts';
+import { COMPUTATION_PRECISION } from './limits';
 
 /**
  * A private Decimal constructor for the engine.

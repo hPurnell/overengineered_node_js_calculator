@@ -1,6 +1,5 @@
-import { EXPRESSION_MAX_DEPTH } from '@calc/contracts';
-
 import { ExpressionTooComplexError, InvalidExpressionError } from '../errors';
+import { EXPRESSION_MAX_DEPTH } from '../limits';
 import { childrenOf, math, type ParsedNode } from './math-instance';
 
 /**

@@ -31,7 +31,7 @@ Four boundaries do the load-bearing work:
 | `@calc/contracts` | The wire format. One schema set, validated on both ends. |
 | `apps/api/src/engine` | Arithmetic, **and that it is mathjs**. A CAS restricted to four-function maths. |
 | `apps/api/src/persistence` | **That history is SQLite.** Callers see only the `HistoryStore` interface. |
-| `apps/api` | HTTP. The engine and the store know nothing about status codes. |
+| `apps/api/src/http` | HTTP. It alone maps an error code to a status; no lower layer knows what a 422 is. |
 
 ### The storage abstraction
 
@@ -143,6 +143,24 @@ entirely untypechecked.
 | --- | --- |
 | `@calc/api` | Precedence, decimal exactness, percent semantics, display formatting and the grammar allowlist; routing, validation, status codes, CORS, health, error envelope; migrations, keyset pagination, precision round-trip; and the layer-boundary rules |
 | `@calc/web` | The full keypad state machine and expression building |
+
+### Layering
+
+Dependencies point one way and the graph is acyclic:
+
+```
+http ──► services ──► engine
+cli  ──► config     └► persistence
+```
+
+`engine`, `persistence` and `config` are leaves that import nothing internal.
+Errors travel *up* carrying an `ApiErrorCode` describing what went wrong;
+[`http/errors.ts`](apps/api/src/http/errors.ts) alone decides the status that
+reports it. That is why `services` must never import `http` — the moment it
+reaches for a status code, `http → services → http` closes a cycle. The
+layer-dependency rules in
+[`architecture.test.ts`](apps/api/test/architecture.test.ts) enforce the table,
+and fail the build if a new top-level directory appears without being declared.
 
 ## Notable decisions
 

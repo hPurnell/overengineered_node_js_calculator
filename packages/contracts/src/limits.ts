@@ -1,18 +1,18 @@
 /**
- * Shared safety limits.
+ * Shared limits that are part of the wire contract.
  *
- * Declared in the contract package so the client can fail fast with the same
- * rules the server enforces, without the two drifting apart.
+ * Declared here so the client can fail fast under the same rules the server
+ * enforces, without the two drifting apart. Only limits both sides genuinely
+ * need belong in this file: engine tuning that happens to be a number — the
+ * arithmetic precision, the parser's nesting budget — lives in
+ * `apps/api/src/engine/limits.ts`, where changing it is not a contract change.
  */
 export const EXPRESSION_MAX_LENGTH = 512;
 
-/** Maximum nesting depth of parentheses / unary operators the parser accepts. */
-export const EXPRESSION_MAX_DEPTH = 32;
-
-/** Significant digits retained by the computation engine. */
-export const COMPUTATION_PRECISION = 34;
-
-/** Digits the calculator display can show before switching to scientific notation. */
+/**
+ * Digits the calculator display can show before switching to scientific
+ * notation. Shared because the client caps typed entry at the same budget.
+ */
 export const DISPLAY_MAX_SIGNIFICANT_DIGITS = 15;
 
 /** Default and maximum page sizes for history listings. */

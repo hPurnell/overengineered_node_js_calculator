@@ -170,3 +170,65 @@ describe('the scan itself', () => {
     expect(sourceFiles.some((f) => f.imports.length > 0)).toBe(true);
   });
 });
+
+/**
+ * Permitted dependencies between top-level layers.
+ *
+ * The graph must stay acyclic and point one way: `http` and `cli` are entry
+ * points, `services` orchestrates, and `engine`/`persistence`/`config` are
+ * leaves that depend on nothing internal.
+ *
+ * The rule that earns its keep is `services` NOT being allowed to import
+ * `http`. Status codes are the transport's business; the moment a service
+ * reaches for one, `http -> services -> http` closes a cycle and the layering
+ * stops meaning anything.
+ */
+const ALLOWED_LAYER_DEPENDENCIES: Readonly<Record<string, readonly string[]>> = {
+  config: [],
+  engine: [],
+  persistence: [],
+  services: ['engine', 'persistence'],
+  http: ['config', 'services'],
+  cli: ['config', 'persistence'],
+};
+
+describe('layer dependencies', () => {
+  /** Resolves an import to the top-level layer it lands in, if any. */
+  function layerOf(fromFile: string, specifier: string): string | undefined {
+    if (!specifier.startsWith('.')) {
+      return undefined;
+    }
+    const target = resolve(fromFile, '..', specifier);
+    const [first] = relative(SRC_ROOT, target).split(sep);
+    return first !== undefined && first in ALLOWED_LAYER_DEPENDENCIES ? first : undefined;
+  }
+
+  it.each(Object.keys(ALLOWED_LAYER_DEPENDENCIES))('%s depends only on what it may', (layer) => {
+    const layerRoot = join(SRC_ROOT, layer);
+    const offenders = sourceFiles
+      .filter((file) => isInside(file.path, layerRoot))
+      .flatMap((file) =>
+        file.imports
+          .map((specifier) => ({ specifier, target: layerOf(file.path, specifier) }))
+          .filter(
+            ({ target }) =>
+              target !== undefined &&
+              target !== layer &&
+              !(ALLOWED_LAYER_DEPENDENCIES[layer] ?? []).includes(target),
+          )
+          .map(({ specifier, target }) => `${show(file.path)} -> ${target} (${specifier})`),
+      );
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('declares every layer that exists on disk', () => {
+    // A new top-level directory must be added to the table deliberately,
+    // rather than silently escaping every rule above.
+    const onDisk = readdirSync(SRC_ROOT, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name);
+
+    expect(onDisk.sort()).toEqual(Object.keys(ALLOWED_LAYER_DEPENDENCIES).sort());
+  });
+});
