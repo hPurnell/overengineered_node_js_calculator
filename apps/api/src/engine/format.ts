@@ -27,11 +27,6 @@ const DECIMAL_SEPARATOR = '.';
  */
 const MINUS_SIGN = '\u2212';
 
-export interface FormatOptions {
-  /** Insert thousands separators in the integer part. Defaults to `true`. */
-  readonly useGrouping?: boolean;
-}
-
 /**
  * Renders a value the way the macOS Calculator display does.
  *
@@ -39,9 +34,7 @@ export interface FormatOptions {
  * an exact-but-unshowable result such as `1/3` reads as `0.333333333333333`
  * rather than being truncated mid-digit.
  */
-export function formatForDisplay(value: Decimal, options: FormatOptions = {}): string {
-  const { useGrouping = true } = options;
-
+export function formatForDisplay(value: Decimal): string {
   if (!value.isFinite()) {
     return 'Not a number';
   }
@@ -59,7 +52,7 @@ export function formatForDisplay(value: Decimal, options: FormatOptions = {}): s
   }
 
   const plain = rounded.toFixed();
-  return withDisplayMinus(useGrouping ? addGrouping(plain) : plain);
+  return withDisplayMinus(addGrouping(plain));
 }
 
 /**
@@ -70,11 +63,6 @@ export function formatForDisplay(value: Decimal, options: FormatOptions = {}): s
  */
 export function toCanonicalString(value: Decimal): string {
   return value.toString();
-}
-
-/** Parses a canonical string produced by {@link toCanonicalString}. */
-export function fromCanonicalString(value: string): Decimal {
-  return new Decimal(value);
 }
 
 function formatScientific(value: Decimal): string {
@@ -90,6 +78,8 @@ function withDisplayMinus(formatted: string): string {
   return formatted.startsWith('-') ? `${MINUS_SIGN}${formatted.slice(1)}` : formatted;
 }
 
+const GROUPING_PATTERN = /\B(?=(\d{3})+(?!\d))/g;
+
 function addGrouping(plain: string): string {
   const isNegative = plain.startsWith('-');
   const unsigned = isNegative ? plain.slice(1) : plain;
@@ -98,7 +88,7 @@ function addGrouping(plain: string): string {
   const integerPart = separatorIndex === -1 ? unsigned : unsigned.slice(0, separatorIndex);
   const fractionPart = separatorIndex === -1 ? '' : unsigned.slice(separatorIndex);
 
-  const grouped = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, GROUP_SEPARATOR);
+  const grouped = integerPart.replace(GROUPING_PATTERN, GROUP_SEPARATOR);
 
   return `${isNegative ? '-' : ''}${grouped}${fractionPart}`;
 }

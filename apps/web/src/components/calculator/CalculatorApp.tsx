@@ -1,5 +1,6 @@
 'use client';
 
+import type { Calculation } from '@calc/contracts';
 import { useCallback, useMemo, useState } from 'react';
 
 import { HistoryPanel } from '@/components/history/HistoryPanel';
@@ -24,12 +25,16 @@ export function CalculatorApp() {
 
   const history = useHistory({ enabled: isHistoryOpen });
 
-  // Refresh the panel after each calculation, but only while it is visible.
-  const onCalculationRecorded = useCallback(() => {
-    if (isHistoryOpen) {
-      history.refresh();
-    }
-  }, [isHistoryOpen, history]);
+  // Show the new entry in the panel, but only while it is visible: a closed
+  // panel reloads from scratch when it opens.
+  const onCalculationRecorded = useCallback(
+    (calculation: Calculation) => {
+      if (isHistoryOpen) {
+        history.prepend(calculation);
+      }
+    },
+    [isHistoryOpen, history],
+  );
 
   const calculator = useCalculator({ onCalculationRecorded });
 

@@ -1,16 +1,15 @@
 import { CalculationRecord, type NewCalculationRecord } from '../models/calculation-record';
 import type { CalculationRow, NewCalculationRow } from './schema';
 
-/** Converts a driver row into the domain model callers receive. */
+/**
+ * Converts a driver row into the domain model callers receive.
+ *
+ * The row and the model share a field-for-field shape, so this is a direct
+ * construction; restating each field only created a second place to edit when
+ * a column is added, and the compiler already checks the shape.
+ */
 export function toRecord(row: CalculationRow): CalculationRecord {
-  return new CalculationRecord({
-    id: row.id,
-    expression: row.expression,
-    displayExpression: row.displayExpression,
-    result: row.result,
-    displayResult: row.displayResult,
-    createdAt: row.createdAt,
-  });
+  return new CalculationRecord(row);
 }
 
 /** Converts caller input into an insertable row, filling in store-owned fields. */

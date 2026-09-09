@@ -1,23 +1,13 @@
-import type { Decimal } from './decimal';
 import { evaluateExpression } from './internal/evaluate';
 import { formatForDisplay, toCanonicalString } from './format';
 
 export * from './errors';
-export { Decimal } from './decimal';
-export {
-  type FormatOptions,
-  formatForDisplay,
-  fromCanonicalString,
-  toCanonicalString,
-} from './format';
 
 export interface ComputationResult {
   /** Exact result, serialised losslessly for storage and transport. */
   readonly result: string;
   /** The same value rendered for the calculator display. */
   readonly displayResult: string;
-  /** The underlying value, for callers that want to keep computing. */
-  readonly value: Decimal;
 }
 
 /**
@@ -28,6 +18,10 @@ export interface ComputationResult {
  * package owns the grammar allowlist, the error taxonomy, and the display
  * formatting, none of which mathjs provides.
  *
+ * Results cross this boundary as strings. Handing back the underlying decimal
+ * would re-export a type owned by `decimal.js`, letting callers reach the whole
+ * arithmetic API through a layer whose entire purpose is to constrain it.
+ *
  * @throws {CalculationError} for any malformed or unevaluable expression.
  */
 export function compute(expression: string): ComputationResult {
@@ -36,6 +30,5 @@ export function compute(expression: string): ComputationResult {
   return {
     result: toCanonicalString(value),
     displayResult: formatForDisplay(value),
-    value,
   };
 }

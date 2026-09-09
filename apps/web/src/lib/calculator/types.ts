@@ -44,9 +44,6 @@ export interface CalculatorState {
   readonly pendingOperator: OperatorSymbol | null;
 
   readonly clearMode: ClearMode;
-
-  /** User-facing error text, shown in place of the readout. */
-  readonly error: string | null;
 }
 
 export type CalculatorAction =

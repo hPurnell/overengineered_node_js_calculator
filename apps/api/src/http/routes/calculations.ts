@@ -34,6 +34,16 @@ export async function registerCalculationRoutes(
 ): Promise<void> {
   const { service, config } = options;
 
+  // Built once: the deployment's page cap is fixed at boot, so rebuilding this
+  // refined schema per request only allocated a new wrapper each time.
+  const listQuerySchema = listCalculationsQuerySchema.refine(
+    (value) => value.limit <= config.historyPageMaxSize,
+    {
+      message: `limit must not exceed ${config.historyPageMaxSize}`,
+      path: ['limit'],
+    },
+  );
+
   /** Evaluate an expression and record it in history. */
   app.post(ApiRoutes.calculations, async (request, reply) => {
     const body = evaluateCalculationRequestSchema.parse(request.body);
@@ -45,13 +55,8 @@ export async function registerCalculationRoutes(
 
   /** Read a page of history, newest first. */
   app.get(ApiRoutes.calculations, async (request, reply) => {
-    const query = listCalculationsQuerySchema
-      // The deployment may cap pages below the contract's ceiling.
-      .refine((value) => value.limit <= config.historyPageMaxSize, {
-        message: `limit must not exceed ${config.historyPageMaxSize}`,
-        path: ['limit'],
-      })
-      .parse(request.query);
+    // The deployment may cap pages below the contract's ceiling.
+    const query = listQuerySchema.parse(request.query);
 
     const response: ListCalculationsResponse = await service.listHistory(query);
     return reply.status(200).send(response);

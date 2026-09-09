@@ -6,7 +6,7 @@
  * or table definition escapes this directory, so replacing the adapter is a
  * change confined to `src/persistence`.
  *
- * `boundary.test.ts` enforces that claim: it fails the build if anything
+ * `test/architecture.test.ts` enforces that claim: it fails the build if anything
  * outside this directory imports the storage engine or reaches past this index.
  */
 export {

@@ -36,8 +36,10 @@ export function registerErrorHandler(app: FastifyInstance): void {
       // Client errors are expected traffic; log them at debug to keep the
       // signal-to-noise ratio of the error log usable. Anything mapping to 5xx
       // is a genuine fault and is logged as one.
-      const log = status >= 500 ? request.log.error : request.log.debug;
-      log.call(request.log, { err: error, code: error.code }, 'Request rejected');
+      request.log[status >= 500 ? 'error' : 'debug'](
+        { err: error, code: error.code },
+        'Request rejected',
+      );
 
       return reply
         .status(status)

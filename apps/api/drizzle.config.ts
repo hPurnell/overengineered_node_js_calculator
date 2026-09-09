@@ -12,7 +12,10 @@ export default defineConfig({
   schema: './src/persistence/internal/schema.ts',
   out: './migrations',
   dbCredentials: {
-    url: process.env.HISTORY_STORE_FILE ?? './data/calculator.db',
+    // The same variable the server and the migration CLI read, so tooling
+    // cannot end up pointed at a different file. drizzle-kit wants a path, so
+    // the `file:` scheme the datasource URL carries is stripped here.
+    url: (process.env.HISTORY_STORE_URL ?? 'file:./data/calculator.db').replace(/^file:/, ''),
   },
   strict: true,
   verbose: true,

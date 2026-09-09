@@ -1,3 +1,5 @@
+import { DISPLAY_MAX_SIGNIFICANT_DIGITS } from '@calc/contracts';
+
 import type { OperatorSymbol } from './types';
 
 /**
@@ -13,8 +15,13 @@ export const OPERATOR_GLYPHS: Readonly<Record<OperatorSymbol, string>> = {
   '/': '÷', // DIVISION SIGN
 };
 
-/** Maximum digits the readout accepts, matching the engine's display budget. */
-export const MAX_ENTRY_DIGITS = 15;
+/**
+ * Maximum digits the readout accepts.
+ *
+ * The engine's display budget, not a parallel constant: typing past what the
+ * result formatter can render would show a number the server would round.
+ */
+export const MAX_ENTRY_DIGITS = DISPLAY_MAX_SIGNIFICANT_DIGITS;
 
 /**
  * Formats an in-progress entry for the readout.
@@ -23,6 +30,8 @@ export const MAX_ENTRY_DIGITS = 15;
  * numbers — a lone `-`, a trailing `.`, or trailing zeros the user is still
  * typing — so this groups the integer part and otherwise leaves the text alone.
  */
+const GROUPING_PATTERN = /\B(?=(\d{3})+(?!\d))/g;
+
 export function formatEntry(entry: string): string {
   const isNegative = entry.startsWith('-');
   const unsigned = isNegative ? entry.slice(1) : entry;
@@ -31,9 +40,9 @@ export function formatEntry(entry: string): string {
   const integerPart = separatorIndex === -1 ? unsigned : unsigned.slice(0, separatorIndex);
   const fractionPart = separatorIndex === -1 ? '' : unsigned.slice(separatorIndex);
 
-  const grouped = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const grouped = integerPart.replace(GROUPING_PATTERN, ',');
 
-  return `${isNegative ? '−' : ''}${grouped || '0'}${fractionPart}`;
+  return `${isNegative ? OPERATOR_GLYPHS['-'] : ''}${grouped || '0'}${fractionPart}`;
 }
 
 /** Counts significant digit characters, ignoring sign and decimal separator. */

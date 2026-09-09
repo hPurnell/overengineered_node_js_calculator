@@ -1,5 +1,6 @@
 'use client';
 
+import { OPERATOR_GLYPHS } from '@/lib/calculator/format';
 import type { OperatorSymbol } from '@/lib/calculator/types';
 
 import { CalculatorKey } from './CalculatorKey';
@@ -42,9 +43,11 @@ export function Keypad({
     />
   );
 
-  const operator = (symbol: OperatorSymbol, glyph: string, name: string) => (
+  // The glyph comes from the same table the expression strip renders from, so
+  // a key face and the line above it cannot disagree.
+  const operator = (symbol: OperatorSymbol, name: string) => (
     <CalculatorKey
-      label={glyph}
+      label={OPERATOR_GLYPHS[symbol]}
       variant="operator"
       ariaLabel={name}
       onPress={() => onOperator(symbol)}
@@ -76,22 +79,22 @@ export function Keypad({
         onPress={onPercent}
         disabled={isBusy}
       />
-      {operator('/', '÷', 'Divide')}
+      {operator('/', 'Divide')}
 
       {digit('7')}
       {digit('8')}
       {digit('9')}
-      {operator('*', '×', 'Multiply')}
+      {operator('*', 'Multiply')}
 
       {digit('4')}
       {digit('5')}
       {digit('6')}
-      {operator('-', '−', 'Subtract')}
+      {operator('-', 'Subtract')}
 
       {digit('1')}
       {digit('2')}
       {digit('3')}
-      {operator('+', '+', 'Add')}
+      {operator('+', 'Add')}
 
       <CalculatorKey
         label="0"

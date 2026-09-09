@@ -11,8 +11,8 @@ import { INITIAL_STATE, calculatorReducer } from '@/lib/calculator/reducer';
 import type { CalculatorState, OperatorSymbol } from '@/lib/calculator/types';
 
 export interface UseCalculatorOptions {
-  /** Called after a calculation is successfully recorded, to refresh history. */
-  readonly onCalculationRecorded?: (() => void) | undefined;
+  /** Called with the calculation just recorded, so history can show it. */
+  readonly onCalculationRecorded?: ((calculation: Calculation) => void) | undefined;
 }
 
 export interface CalculatorController {
@@ -77,7 +77,7 @@ export function useCalculator(options: UseCalculatorOptions = {}): CalculatorCon
       const calculation = await evaluateExpression(submission, { signal: controller.signal });
       setConnectionError(null);
       dispatch({ type: 'evaluateSucceeded', calculation });
-      onCalculationRecorded?.();
+      onCalculationRecorded?.(calculation);
     } catch (error) {
       if (controller.signal.aborted) {
         return;

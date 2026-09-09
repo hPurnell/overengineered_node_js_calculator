@@ -7,19 +7,25 @@
  *   HISTORY_STORE_URL=file:./data/calculator.db npm run db:migrate --workspace @calc/api
  */
 import { loadEnvFile } from '../config/env-file';
+import { loadConfig } from '../config/environment';
 import { WORKSPACE_ROOT } from '../config/paths';
 import { migrateHistoryStore } from '../persistence';
 
 function main(): void {
   loadEnvFile();
 
-  const url = process.env['HISTORY_STORE_URL'] ?? 'file:./data/calculator.db';
-  const override = process.env['HISTORY_STORE_MIGRATIONS'];
+  // Resolved through the same validated config the server uses. Reading
+  // process.env here would re-declare the default, and a typo'd variable would
+  // migrate the default database while the server failed to boot against
+  // another one.
+  const { historyStore } = loadConfig();
 
   const result = migrateHistoryStore({
-    url,
+    url: historyStore.url,
     baseDirectory: WORKSPACE_ROOT,
-    ...(override === undefined ? {} : { migrationsFolder: override }),
+    ...(historyStore.migrationsFolder === undefined
+      ? {}
+      : { migrationsFolder: historyStore.migrationsFolder }),
   });
 
   process.stdout.write(`Applied migrations from ${result.migrationsFolder}\n`);

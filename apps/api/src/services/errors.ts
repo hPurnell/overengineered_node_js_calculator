@@ -33,7 +33,3 @@ export class ServiceError extends Error {
     return new ServiceError(ApiErrorCode.VALIDATION_FAILED, message, { details });
   }
 }
-
-export function isServiceError(error: unknown): error is ServiceError {
-  return error instanceof ServiceError;
-}

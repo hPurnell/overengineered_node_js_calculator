@@ -19,6 +19,8 @@ const environmentSchema = z.object({
   CORS_ORIGINS: z.string().default('http://localhost:3000'),
 
   HISTORY_STORE_URL: z.string().min(1).default('file:./data/calculator.db'),
+  /** Overrides where migrations are read from. Intended for tooling. */
+  HISTORY_STORE_MIGRATIONS: z.string().min(1).optional(),
   HISTORY_STORE_AUTO_MIGRATE: z
     .enum(['true', 'false'])
     .default('true')
@@ -45,6 +47,7 @@ export interface AppConfig {
   readonly historyStore: {
     readonly url: string;
     readonly autoMigrate: boolean;
+    readonly migrationsFolder: string | undefined;
   };
   readonly historyPageMaxSize: number;
   readonly rateLimitPerMinute: number;
@@ -79,6 +82,7 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): AppConfig {
     historyStore: {
       url: environment.HISTORY_STORE_URL,
       autoMigrate: environment.HISTORY_STORE_AUTO_MIGRATE,
+      migrationsFolder: environment.HISTORY_STORE_MIGRATIONS,
     },
     historyPageMaxSize: environment.HISTORY_PAGE_MAX_SIZE,
     rateLimitPerMinute: environment.RATE_LIMIT_PER_MINUTE,

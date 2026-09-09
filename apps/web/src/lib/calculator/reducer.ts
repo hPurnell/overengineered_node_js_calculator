@@ -1,4 +1,12 @@
-import { MAX_ENTRY_DIGITS, countDigits, formatEntry, isOperatorToken, toDisplayExpression } from './format';
+import type { Calculation } from '@calc/contracts';
+
+import {
+  MAX_ENTRY_DIGITS,
+  countDigits,
+  formatEntry,
+  isOperatorToken,
+  toDisplayExpression,
+} from './format';
 import type { CalculatorAction, CalculatorState } from './types';
 
 export const INITIAL_STATE: CalculatorState = {
@@ -11,7 +19,6 @@ export const INITIAL_STATE: CalculatorState = {
   lastResult: null,
   pendingOperator: null,
   clearMode: 'all',
-  error: null,
 };
 
 /**
@@ -50,34 +57,28 @@ export function calculatorReducer(
       return clear(state);
 
     case 'evaluateStarted':
-      return { ...state, status: 'computing', error: null };
+      return { ...state, status: 'computing' };
 
+    // A finished calculation lands on the readout the same way whether it was
+    // just computed or recalled from history.
     case 'evaluateSucceeded':
-      return {
-        ...INITIAL_STATE,
-        display: action.calculation.displayResult,
-        expressionPreview: `${action.calculation.displayExpression} =`,
-        lastResult: action.calculation.result,
-        showingResult: true,
-      };
+    case 'recall':
+      return showCalculation(action.calculation);
 
     case 'evaluateFailed':
-      return {
-        ...INITIAL_STATE,
-        display: action.message,
-        status: 'error',
-        error: action.message,
-      };
-
-    case 'recall':
-      return {
-        ...INITIAL_STATE,
-        display: action.calculation.displayResult,
-        expressionPreview: `${action.calculation.displayExpression} =`,
-        lastResult: action.calculation.result,
-        showingResult: true,
-      };
+      return { ...INITIAL_STATE, display: action.message, status: 'error' };
   }
+}
+
+/** Puts a completed calculation on the readout, ready to be chained from. */
+function showCalculation(calculation: Calculation): CalculatorState {
+  return {
+    ...INITIAL_STATE,
+    display: calculation.displayResult,
+    expressionPreview: `${calculation.displayExpression} =`,
+    lastResult: calculation.result,
+    showingResult: true,
+  };
 }
 
 /** Any input after an error starts from a clean slate, as on a Mac. */
@@ -179,7 +180,6 @@ function applyOperator(
     expressionPreview: toDisplayExpression(tokens, null),
     clearMode: 'all',
     status: 'idle',
-    error: null,
   };
 }
 
@@ -206,7 +206,6 @@ function applyPercent(current: CalculatorState): CalculatorState {
     pendingOperator: null,
     expressionPreview: toDisplayExpression(tokens, null),
     status: 'idle',
-    error: null,
   };
 }
 
@@ -244,7 +243,7 @@ function backspace(current: CalculatorState): CalculatorState {
       entry: null,
       display: '0',
       expressionPreview: toDisplayExpression(state.tokens, null),
-      clearMode: state.tokens.length > 0 ? 'all' : 'all',
+      clearMode: 'all',
     };
   }
 
@@ -262,7 +261,6 @@ function clear(state: CalculatorState): CalculatorState {
       expressionPreview: toDisplayExpression(state.tokens, null),
       clearMode: 'all',
       status: 'idle',
-      error: null,
     };
   }
 
@@ -280,6 +278,5 @@ function withEntry(state: CalculatorState, entry: string): CalculatorState {
     pendingOperator: null,
     clearMode: 'entry',
     status: 'idle',
-    error: null,
   };
 }

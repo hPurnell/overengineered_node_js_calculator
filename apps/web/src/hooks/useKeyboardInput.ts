@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import type { OperatorSymbol } from '@/lib/calculator/types';
 
@@ -32,6 +32,15 @@ const OPERATOR_KEYS: Readonly<Record<string, OperatorSymbol>> = {
  * responds immediately without the user having to click into it first.
  */
 export function useKeyboardInput(handlers: KeyboardHandlers, enabled = true): void {
+  /**
+   * The listener reads its handlers through a ref rather than closing over
+   * them. Callers rebuild the handler object on most renders, and depending on
+   * it directly would detach and re-attach a window listener on every
+   * keystroke — so the subscription is kept independent of caller discipline.
+   */
+  const handlersRef = useRef(handlers);
+  handlersRef.current = handlers;
+
   useEffect(() => {
     if (!enabled) {
       return;
@@ -52,17 +61,18 @@ export function useKeyboardInput(handlers: KeyboardHandlers, enabled = true): vo
       }
 
       const { key } = event;
+      const handle = handlersRef.current;
 
       if (key >= '0' && key <= '9') {
         event.preventDefault();
-        handlers.onDigit(key);
+        handle.onDigit(key);
         return;
       }
 
       const operator = OPERATOR_KEYS[key];
       if (operator !== undefined) {
         event.preventDefault();
-        handlers.onOperator(operator);
+        handle.onOperator(operator);
         return;
       }
 
@@ -70,37 +80,37 @@ export function useKeyboardInput(handlers: KeyboardHandlers, enabled = true): vo
         case '.':
         case ',':
           event.preventDefault();
-          handlers.onDecimal();
+          handle.onDecimal();
           break;
 
         case 'Enter':
         case '=':
           event.preventDefault();
-          handlers.onEquals();
+          handle.onEquals();
           break;
 
         case 'Backspace':
         case 'Delete':
           event.preventDefault();
-          handlers.onBackspace();
+          handle.onBackspace();
           break;
 
         case 'Escape':
         case 'c':
         case 'C':
           event.preventDefault();
-          handlers.onClear();
+          handle.onClear();
           break;
 
         case '%':
           event.preventDefault();
-          handlers.onPercent();
+          handle.onPercent();
           break;
 
         case 'n':
         case 'N':
           event.preventDefault();
-          handlers.onToggleSign();
+          handle.onToggleSign();
           break;
 
         default:
@@ -112,5 +122,5 @@ export function useKeyboardInput(handlers: KeyboardHandlers, enabled = true): vo
     return () => {
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [handlers, enabled]);
+  }, [enabled]);
 }

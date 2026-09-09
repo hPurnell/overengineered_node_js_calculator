@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { and, count, desc, eq, lt, or } from 'drizzle-orm';
+import { and, desc, eq, lt, or } from 'drizzle-orm';
 
 import { HistoryStoreError } from '../errors';
 import type { CalculationRecord, NewCalculationRecord } from '../models/calculation-record';
@@ -104,7 +104,10 @@ export class SqliteHistoryStore implements HistoryStore {
     }
 
     try {
-      this.connection.db.select({ value: count() }).from(calculations).all();
+      // Proves the handle and the file are readable in constant time. A
+      // COUNT(*) would scan every row on each health check, and the cost would
+      // grow with history for an answer that never depends on it.
+      this.connection.sqlite.prepare('SELECT 1').get();
       return true;
     } catch {
       return false;

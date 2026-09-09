@@ -15,6 +15,8 @@ export interface HistoryController {
   readonly error: string | null;
   readonly hasMore: boolean;
   readonly refresh: () => void;
+  /** Inserts an already-fetched calculation at the top of the list. */
+  readonly prepend: (calculation: Calculation) => void;
   readonly loadMore: () => void;
   readonly clear: () => void;
   readonly remove: (id: string) => void;
@@ -164,6 +166,15 @@ export function useHistory({ enabled }: UseHistoryOptions): HistoryController {
     refresh: useCallback(() => {
       void refresh();
     }, [refresh]),
+    /**
+     * Used instead of a refetch after a calculation: the POST response already
+     * contains the new row in full, so re-reading the page would cost a round
+     * trip and a query to learn something we hold — and would discard any
+     * further pages the user had loaded.
+     */
+    prepend: useCallback((calculation: Calculation) => {
+      setItems((current) => [calculation, ...current]);
+    }, []),
     loadMore: useCallback(() => {
       void loadMore();
     }, [loadMore]),

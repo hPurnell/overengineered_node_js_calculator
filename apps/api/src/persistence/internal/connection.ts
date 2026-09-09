@@ -25,7 +25,7 @@ const IN_MEMORY_LOCATION = ':memory:';
  * `file:` scheme is the documented form so that configuration reads as a
  * datasource URL rather than a path, keeping the door open for other drivers.
  */
-export function resolveLocation(url: string, baseDirectory: string): string {
+function resolveLocation(url: string, baseDirectory: string): string {
   if (url === IN_MEMORY_LOCATION || url === 'file::memory:') {
     return IN_MEMORY_LOCATION;
   }
